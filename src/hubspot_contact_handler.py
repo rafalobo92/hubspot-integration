@@ -1,32 +1,46 @@
+import time
+
 from hubspot import HubSpot
-from hubspot.crm.contacts import SimplePublicObjectInput, SimplePublicObjectInputForCreate
+from hubspot.crm.contacts import BatchInputSimplePublicObjectBatchInputUpsert, SimplePublicObjectBatchInput
 from hubspot.crm.contacts.exceptions import ApiException
-from config.settings import HUBSPOT_API_KEY
+from config.logger import logger
+from config.settings import HUBSPOT_API_KEY, RATE_LIMIT_MAX_RETRIES, RATE_LIMIT_BASE_WAIT
 
 class HubSpotContactHandler:
+
     def __init__(self):
         self.client = HubSpot()
         self.client.access_token = HUBSPOT_API_KEY
-    
-    def get_contacts(self, count=10):
-        try:
-            api_response = self.client.crm.contacts.basic_api.get_page(limit=count)
-            return [contact.to_dict() for contact in api_response.results]
-        except ApiException as e:
-            return {"error": f"Exception when calling HubSpot API: {e}"}
-    
-    def create_contact(self, properties):
-        contact_input = SimplePublicObjectInputForCreate(properties=properties)
-        try:
-            api_response = self.client.crm.contacts.basic_api.create(contact_input)
-            return api_response.to_dict()
-        except ApiException as e:
-            return {"error": f"Exception when creating contact: {e}"}
-    
-    def update_contact(self, contact_id, properties):
-        contact_input = SimplePublicObjectInput(properties=properties)
-        try:
-            api_response = self.client.crm.contacts.basic_api.update(contact_id, contact_input)
-            return api_response.to_dict()
-        except ApiException as e:
-            return {"error": f"Exception when updating contact: {e}"}
+
+    def upsert_contacts(self, contacts):
+        batch_input = self.create_batch_input(contacts)
+
+        for attempt in range(RATE_LIMIT_MAX_RETRIES):
+            try:
+                api_response = self.client.crm.contacts.batch_api.upsert(batch_input)
+                return api_response.to_dict()
+            except ApiException as e:
+                if e.status == 429:
+                    wait_time = RATE_LIMIT_BASE_WAIT * (2 ** attempt)
+                    logger.warning(f"Rate limit reached. Retrying in {wait_time:.2f} seconds... (Attempt {attempt + 1}/{RATE_LIMIT_MAX_RETRIES})")
+                    time.sleep(wait_time)
+                else:
+                    return {"error": f"ApiException: {e}"}
+
+        return {"error": "Max retries reached. Failed to upsert contacts.."}
+
+    def create_batch_input(self, contacts):
+        return BatchInputSimplePublicObjectBatchInputUpsert(
+            inputs=[
+                SimplePublicObjectBatchInput(
+                    id_property="email",
+                    id=contact["email"],
+                    properties={
+                        "firstname": contact["first_name"],
+                        "lastname": contact["last_name"],
+                        "phone": contact["phone_number"],
+                        "gender": contact["gender"]
+                    }
+                ) for contact in contacts
+            ]
+        )
