@@ -1,4 +1,4 @@
-# Contact Sync Service
+# HubSpot Integration
 
 ## Requirements
 Ensure you have **Python 3.7+** and **pip** installed. You can install the required dependencies using the following commands:
