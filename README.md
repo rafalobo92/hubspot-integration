@@ -11,45 +11,33 @@ pip install -r requirements.txt
 ```
 
 ## Environment Variables Setup
-
 Before running the application, you need to set up your environment variables. You can either export them directly in your terminal or create a `.env` file in the root directory of the project.
+
 ### Option 1: Set environment variables directly
 
 ```sh
 export HUBSPOT_API_KEY="key_here"
 export AWS_ACCESS_KEY="key_here"
-export AWS_PROD_URL="url_here"
+export AWS_PROD_URL="root_url_here"
 ```
 
-#### Option 2: Create a `.env` file
-
+### Option 2: Create a `.env` file
 Create a `.env` file in the root directory of the project and add the following lines:
 
 ```ini
 HUBSPOT_API_KEY=key_here
 AWS_ACCESS_KEY=key_here
-AWS_PROD_URL=url_here
+AWS_PROD_URL=root_url_here
 ```
 
 Replace `key_here` and `url_here` with your actual HubSpot API key, AWS access key, and AWS production URL **(without `/contacts`)**.
 
 ## Running the Application
-Once dependencies are installed, you can run the application with:
+Once dependencies are installed and environment variables are set, you can run the application with:
 
 ```sh
 python main.py
 ```
-
-## Batch Limits
-HubSpot batch operations are limited to **100 records at a time**. For more details, check the official documentation:
-[HubSpot API Batch Limits](https://developers.hubspot.com/docs/guides/api/crm/objects/contacts#limits)
-
-## Rate Limits
-- **100 private app requests every 10 seconds** (lowest tier).
-- If the rate limit is reached, the system implements an **exponential backoff retry mechanism**.
-
-For more details, refer to the official HubSpot API rate limits:
-[HubSpot API Rate Limits](https://developers.hubspot.com/docs/guides/apps/api-usage/usage-details#request-limits)
 
 ## Application Notes
 
@@ -70,3 +58,16 @@ PYTHONPATH=./ pytest
 ```
 
 This command sets the PYTHONPATH to the current directory (./) and runs the tests using pytest.
+
+## Batch Limits
+HubSpot batch operations are limited to **100 records per batch request**. This value can be adjusted in `settings.py`, but it **must not exceed 100** to comply with HubSpot’s restrictions.
+
+For more details, refer to the official documentation:
+[HubSpot API Batch Limits](https://developers.hubspot.com/docs/guides/api/crm/objects/contacts#limits)
+
+## Rate Limits
+- **100 private app requests every 10 seconds** (lowest tier).
+- If the rate limit is reached, the system implements an **exponential backoff retry mechanism**.
+
+For more details, refer to the official HubSpot API rate limits:
+[HubSpot API Rate Limits](https://developers.hubspot.com/docs/guides/apps/api-usage/usage-details#request-limits)
