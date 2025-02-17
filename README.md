@@ -1,13 +1,20 @@
 # HubSpot Integration
+This application integrates with HubSpot to manage contacts. It supports batch processing of contact data, handles rate limits, and utilizes HubSpot's upsert API to efficiently create or update contacts.
 
 ## Requirements
 Ensure you have **Python 3.7+** and **pip** installed. You can install the required dependencies using the following commands:
 
 ```sh
+sudo apt install python3.7 -y
 sudo apt install python3-pip -y
-pip install requests==2.28.2
-pip install --upgrade hubspot-api-client
-pip install python-dotenv
+pip install -r requirements.txt
+```
+
+## Running the Application
+Once dependencies are installed, you can run the application with:
+
+```sh
+python main.py
 ```
 
 ## Batch Limits
@@ -20,3 +27,23 @@ HubSpot batch operations are limited to **100 records at a time**. For more deta
 
 For more details, refer to the official HubSpot API rate limits:
 [HubSpot API Rate Limits](https://developers.hubspot.com/docs/guides/apps/api-usage/usage-details#request-limits)
+
+## Application Notes
+
+- Multithreading: The app is configured to use up to 10 workers for concurrent processing of contact data.
+- Upsert API Request: The app uses HubSpot's upsert API to create or update contacts based on email addresses.
+- Email as Unique Identifier: Contacts are uniquely identified by their email for updates. This decision is open to modification based on the Business Rules.
+- AWS Data Processing: Contacts that do not have an email address are excluded from processing. This is also an operational choice that can be altered based on the Business Rules.
+
+### Business Rules
+
+All the app's operational decisions could be changed based on the Business Rules.
+
+## Running Unit Tests
+To run the unit tests, use the following command:
+
+```sh
+PYTHONPATH=./ pytest
+```
+
+This command sets the PYTHONPATH to the current directory (./) and runs the tests using pytest.

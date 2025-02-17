@@ -1,7 +1,8 @@
 from src.hubspot_contact_handler import HubSpotContactHandler
 from src.aws_contact_handler import AWSContactHandler
+from utils.batch_processing import create_aws_batch_contacts
 from config.logger import logger
-from config.settings import MAX_WORKERS, HUBSPOT_CREATE_CONTACT_BATCH_SIZE
+from config.settings import MAX_WORKERS
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class ContactSyncService:
@@ -10,30 +11,24 @@ class ContactSyncService:
         self.aws_contact_handler = AWSContactHandler()
         self.hubspot_contact_handler = HubSpotContactHandler()
 
-    def sync(self, quantity):
+    def sync(self):
         aws_contacts = self.aws_contact_handler.fetch_contacts()
         if not aws_contacts:
             logger.info("No contacts to sync.")
             return
 
-        contacts_to_import = aws_contacts[:quantity]
-        batch_contacts = self.create_batch_contacts(contacts=contacts_to_import)
+        batch_contacts = create_aws_batch_contacts(aws_contacts)
 
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-            futures = {executor.submit(self.hubspot_contact_handler.upsert_contacts, batch): batch for batch in batch_contacts}
+            futures = {
+                executor.submit(self.hubspot_contact_handler.upsert_contacts, batch): batch
+                for batch in batch_contacts
+            }
             for future in as_completed(futures):
-                batch = futures[future]
+                futures[future]
                 try:
                     response = future.result()
                     if "error" in response:
                         logger.error(f"Error upserting contacts in HubSpot: {response['error']}")
-                    else:
-                        logger.info(f"Successfully upserted {len(batch)} contacts in HubSpot.")
                 except Exception as e:
                     logger.error(f"Exception upserting contacts in HubSpot: {e}")
-
-    def create_batch_contacts(self, contacts):
-        return [
-            contacts[i : i + HUBSPOT_CREATE_CONTACT_BATCH_SIZE]
-            for i in range(0, len(contacts), HUBSPOT_CREATE_CONTACT_BATCH_SIZE)
-        ]
