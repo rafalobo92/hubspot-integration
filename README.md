@@ -10,6 +10,29 @@ sudo apt install python3-pip -y
 pip install -r requirements.txt
 ```
 
+## Environment Variables Setup
+
+Before running the application, you need to set up your environment variables. You can either export them directly in your terminal or create a `.env` file in the root directory of the project.
+### Option 1: Set environment variables directly
+
+```sh
+export HUBSPOT_API_KEY="key_here"
+export AWS_ACCESS_KEY="key_here"
+export AWS_PROD_URL="url_here"
+```
+
+#### Option 2: Create a `.env` file
+
+Create a `.env` file in the root directory of the project and add the following lines:
+
+```ini
+HUBSPOT_API_KEY=key_here
+AWS_ACCESS_KEY=key_here
+AWS_PROD_URL=url_here
+```
+
+Replace `key_here` and `url_here` with your actual HubSpot API key, AWS access key, and AWS production URL **(without `/contacts`)**.
+
 ## Running the Application
 Once dependencies are installed, you can run the application with:
 
@@ -31,7 +54,7 @@ For more details, refer to the official HubSpot API rate limits:
 ## Application Notes
 
 - Multithreading: The app is configured to use up to 10 workers for concurrent processing of contact data.
-- Upsert API Request: The app uses HubSpot's upsert API to create or update contacts based on email addresses.
+- Upsert API Request: The app uses HubSpot's upsert API request to create or update contacts based on email addresses.
 - Email as Unique Identifier: Contacts are uniquely identified by their email for updates. This decision is open to modification based on the Business Rules.
 - AWS Data Processing: Contacts that do not have an email address are excluded from processing. This is also an operational choice that can be altered based on the Business Rules.
 
